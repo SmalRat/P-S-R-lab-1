@@ -138,9 +138,9 @@ train_path <- "data/1-discrimination/train.csv"
 
 stop_words <- read_file("stop_words.txt")
 # https://stackoverflow.com/questions/27195912/why-does-strsplit-return-a-list
-splitted_stop_words <- strsplit(stop_words, split='\n')
-splitted_stop_words <- splitted_stop_words[[1]]
-splitted_stop_words
+Word_stop_words <- strsplit(stop_words, split='\n')
+Word_stop_words <- Word_stop_words[[1]]
+Word_stop_words
 ```
 
 ```{r}
@@ -151,17 +151,17 @@ test <-  read.csv(file = test_path, stringsAsFactors = FALSE)
 
 ```{r}
 # note the power functional features of R bring us! 
-tidy_text <- unnest_tokens(train, 'splitted', 'tweet', token="words") %>%
-             filter(!(splitted %in% splitted_stop_words) & (nchar(splitted) > 2))
+tidy_text <- unnest_tokens(train, 'Word', 'tweet', token="words") %>%
+             filter(!(Word %in% Word_stop_words) & (nchar(Word) > 2))
 #tidy_text
 
 neutral_posts_text <- filter(tidy_text, label == "neutral")
-neutral_posts_counted <- count(neutral_posts_text, splitted, sort=TRUE)
+neutral_posts_counted <- count(neutral_posts_text, Word, sort=TRUE)
 neutral_posts_text
 neutral_posts_counted
 
 discrimination_posts_text <- filter(tidy_text, label == "discrim")
-discrimination_posts_counted <- count(discrimination_posts_text, splitted, sort=TRUE)
+discrimination_posts_counted <- count(discrimination_posts_text, Word, sort=TRUE)
 discrimination_posts_text
 discrimination_posts_counted
 
@@ -178,8 +178,8 @@ Neutral posts statistics:
 
 ```{r}
 head(neutral_posts_counted, 20) %>%
-  mutate(splitted = reorder(splitted, n)) %>%
-  ggplot(aes(splitted, n)) +
+  mutate(Word = reorder(Word, n)) %>%
+  ggplot(aes(Word, n)) +
   geom_col() +
   xlab(NULL) +
   coord_flip()
@@ -191,8 +191,8 @@ Discrimination posts statistics:
 
 ```{r}
 head(discrimination_posts_counted, 20) %>%
-  mutate(splitted = reorder(splitted, n)) %>%
-  ggplot(aes(splitted, n)) +
+  mutate(Word = reorder(Word, n)) %>%
+  ggplot(aes(Word, n)) +
   geom_col() +
   xlab(NULL) +
   coord_flip()
@@ -206,21 +206,34 @@ naiveBayes <- setRefClass("naiveBayes",
                           
        # here it would be wise to have some vars to store intermediate result
        # frequency dict etc. Though pay attention to bag of wards! 
-       fields = list(),
+       fields = list(data = "data.frame", labels = "list"),
        methods = list(
                     # prepare your training data as X - bag of words for each of your
                     # messages and corresponding label for the message encoded as 0 or 1 
                     # (binary classification task)
                     fit = function(X, y)
                     {
-                         #if (y == 1){
-                         #  label=
-                         #}
+                         # print(data)
+                         # print(labels)
+                         
+                         for (i in seq(1,length(unlist(labels)))){
+                           current_label <- unlist(labels)[i]
+                           
+                           column_name = paste("P(word|",current_label,")")
+                           
+                           current_topic = filter(X, label == current_label) %>% count(Word, sort=TRUE)
+                           
+                           current_topic[column_name] = ((current_topic["n"]+1)/(sum(current_topic$n) + length(unique(current_topic$Word))))
+                          
+                           data <<- merge(data, current_topic, by = "Word", all = TRUE)
+                           
+                         }
+                         data <<- data[order(data$n.x, decreasing = TRUE), ]
+                         data[is.na(data)] <- 0
+                         print(data)
+                         
                         
-                         neutral_posts_counted["P(word|neutral)"] <- (neutral_posts_counted["n"]+1)/(sum(neutral_posts_counted$n) + unique(neutral_posts_counted$n))
-                         discrimination_posts_counted["P(word|discrimination)"] <- (discrimination_posts_counted["n"]+1)/(sum(discrimination_posts_counted$n) + unique(discrimination_posts_counted$n))
-                         discrimination_posts_counted
-                         unique(discrimination_posts_counted$n)
+                         
                          
                          
                     },
@@ -241,9 +254,9 @@ naiveBayes <- setRefClass("naiveBayes",
                          # TODO
                     }
 ))
-
-model = naiveBayes()
-model$fit()
+words_list = list(unique(tidy_text$Word))
+model = naiveBayes(labels=list(unique(tidy_text$label)), data=data.frame("Word" = unlist(words_list)))
+model$fit(X=tidy_text)
 ```
 
 ## Measure effectiveness of your classifier
