@@ -153,7 +153,7 @@ test <-  read.csv(file = test_path, stringsAsFactors = FALSE)
 # note the power functional features of R bring us! 
 tidy_text <- unnest_tokens(train, 'splitted', 'tweet', token="words") %>%
              filter(!(splitted %in% splitted_stop_words) & (nchar(splitted) > 2))
-tidy_text
+#tidy_text
 
 neutral_posts_text <- filter(tidy_text, label == "neutral")
 neutral_posts_counted <- count(neutral_posts_text, splitted, sort=TRUE)
@@ -213,7 +213,16 @@ naiveBayes <- setRefClass("naiveBayes",
                     # (binary classification task)
                     fit = function(X, y)
                     {
-                         # TODO
+                         #if (y == 1){
+                         #  label=
+                         #}
+                        
+                         neutral_posts_counted["P(word|neutral)"] <- (neutral_posts_counted["n"]+1)/(sum(neutral_posts_counted$n) + unique(neutral_posts_counted$n))
+                         discrimination_posts_counted["P(word|discrimination)"] <- (discrimination_posts_counted["n"]+1)/(sum(discrimination_posts_counted$n) + unique(discrimination_posts_counted$n))
+                         discrimination_posts_counted
+                         unique(discrimination_posts_counted$n)
+                         
+                         
                     },
                     
                     # return prediction for a single message 
