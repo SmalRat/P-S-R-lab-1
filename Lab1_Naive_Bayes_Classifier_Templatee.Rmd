@@ -140,6 +140,7 @@ stop_words <- read_file("stop_words.txt")
 # https://stackoverflow.com/questions/27195912/why-does-strsplit-return-a-list
 splitted_stop_words <- strsplit(stop_words, split='\n')
 splitted_stop_words <- splitted_stop_words[[1]]
+splitted_stop_words
 ```
 
 ```{r}
@@ -152,6 +153,7 @@ test <-  read.csv(file = test_path, stringsAsFactors = FALSE)
 # note the power functional features of R bring us! 
 tidy_text <- unnest_tokens(train, 'splitted', 'tweet', token="words") %>%
              filter(!(splitted %in% splitted_stop_words) & (nchar(splitted) > 2))
+tidy_text
 
 neutral_posts_text <- filter(tidy_text, label == "neutral")
 neutral_posts_counted <- count(neutral_posts_text, splitted, sort=TRUE)
