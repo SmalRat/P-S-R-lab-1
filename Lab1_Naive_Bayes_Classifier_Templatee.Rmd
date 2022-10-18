@@ -284,7 +284,7 @@ naiveBayes <- setRefClass("naiveBayes",
                              relevant_data[nrow(relevant_data)+1,] <- c(c(word), probability_vector)
                            }
                          }
-                         print(relevant_data)
+                         #print(relevant_data)
                          
                          
                          for (label in seq(1,length(labels))){
@@ -319,11 +319,11 @@ naiveBayes <- setRefClass("naiveBayes",
                            product_vector[label] = multiplication_product_vector[2*label]
                          }
                          
-                         print(product_vector)
-                         print(multiplication_vector)
+                         #print(product_vector)
+                         #print(multiplication_vector)
                          current_max = multiplication_vector[1];
                          idxs <- c()
-                         range <- 5:length(multiplication_vector)
+                         range <- 1:length(multiplication_vector)
                          for (i in range) {
                            if (!(is.na(multiplication_vector[i])) && (multiplication_vector[i] > current_max)) {
                              current_max = multiplication_vector[i]
@@ -344,9 +344,10 @@ naiveBayes <- setRefClass("naiveBayes",
                              }
                             }
                            }
-                         print(max)
-                         print(labels)
-                         
+                         #print(max)
+                         #print(labels)
+                        
+                         return(labels[max])
                     },
                     
                     # score you test set so to get the understanding how well you model
@@ -357,30 +358,30 @@ naiveBayes <- setRefClass("naiveBayes",
                     score = function(filepath)
                     {
                       
-                      test <-  read.csv(file = filepath, stringsAsFactors = FALSE)
+                      test <-  head(read.csv(file = filepath, stringsAsFactors = FALSE), 20)
                       predictions = vector(length=nrow(test))
                       
                       
-                      #remove first line in df
                       count = 1
                       
                       for (message in test$tweet) {
+                        # print(message)
                         print(message)
-                        
-                        predictions[count] = predict(message)
-                        if (predictions[count] == 1) {
+                        prediction <- model$predict(message)
+                        print(prediction)
+                        # predictions[count] = predict(message)
+                        if (prediction == 1) {
                           
-                          predicitons <- append(predicitons, "discrim")
+                          predictions <- append(prediciton, "discrim")
                         } else {
-                          predictions <- append(predictions, "neutral")
+                          predictions <- append(prediction, "neutral")
                         }
-                        count = count + 1
+                        # count = count + 1
                       }
-                      print(predictions)
-                      data1 <- read.csv(filepath, stringsAsFactors = FALSE)
-                      data1 <- data1[, -1]
-                      data1 <- data1[, -1]
-                      names(data1) <- "test set"
+                      # print(predictions)
+                      data1 <- test$labels
+                      # data1 <- data1[, -1]
+                      print(data1)
                       data1$prediction <- predictions
                       counter = 0
                       for (row in 1:nrow(data1)) {
@@ -397,7 +398,7 @@ naiveBayes <- setRefClass("naiveBayes",
 words_list = list(unique(tidy_t$Word))
 model = naiveBayes(labels=unique(tidy_t$label), data=data.frame("Word" = unlist(words_list)), labels_quantity=length(unique(tidy_t$label)))
 model$fit(X=tidy_t)
-model$predict("Trump black wertafyyfay the in a zzzzzzzz")
+#print(model$predict("Trump black wertafyyfay the in a zzzzzzzz"))
 model$score(test_path)
 ```
 
