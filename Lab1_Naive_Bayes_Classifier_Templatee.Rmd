@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Lab Assignment 1: Naive Bayes Classifier
 
-### *Lera Fedorchak, Oleksandra Maslenchenko, Oleksandr Shchur*
+### *Valeriia Fedorchak, Oleksandra Maslenchenko, Oleksandr Shchur*
 
 ## Introduction
 
@@ -358,7 +358,7 @@ naiveBayes <- setRefClass("naiveBayes",
                     score = function(filepath)
                     {
                       
-                      test <-  head(read.csv(file = filepath, stringsAsFactors = FALSE), 100)
+                      test <-  head(read.csv(file = filepath, stringsAsFactors = FALSE), 1000)
                       predictions = vector(length=nrow(test))
                       
                       
