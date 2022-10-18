@@ -76,15 +76,6 @@ first one you will need find the probabilities distributions for each of
 the features, while the second one is needed for checking how well your
 classifier works.
 
-```{r}
-# here goes a list of recommended libraries,
-# though you may install other ones if they are needed
-library(tidytext)
-library(readr)
-library(dplyr)
-library(ggplot2)
-library(tm)
-```
 
 ## Instructions
 
@@ -128,45 +119,64 @@ library(tm)
         . Note that it also includes an example on how to create a bag
         of words from your text document.
 
-```{r}
-list.files(getwd())
-list.files("data/1-discrimination")
-```
+
+
 
 ```{r}
+# here goes a list of recommended libraries,
+# though you may install other ones if they are needed
+library(tidytext)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(tm)
+
+list.files(getwd())
+list.files("data/1-discrimination")
+
 test_path <- "data/1-discrimination/test.csv"
 train_path <- "data/1-discrimination/train.csv"
 
 stop_words <- read_file("stop_words.txt")
-# https://stackoverflow.com/questions/27195912/why-does-strsplit-return-a-list
-Word_stop_words <- strsplit(stop_words, split='\n')
-Word_stop_words <- Word_stop_words[[1]]
-Word_stop_words
-```
+Word_stop_words <- strsplit(stop_words, split='\n')[[1]]
 
-```{r}
 train <-  read.csv(file = train_path, stringsAsFactors = FALSE)
 test <-  read.csv(file = test_path, stringsAsFactors = FALSE)
-#train
-```
 
-```{r}
-# note the power functional features of R bring us! 
-tidy_text <- unnest_tokens(train, 'Word', 'tweet', token="words") %>%
+create_new_bag_of_words_with_label <- function(path, flag){
+  stop_words <- read_file("stop_words.txt")
+  Word_stop_words <- strsplit(stop_words, split='\n')[[1]]
+  file_text <- read.csv(file = path, stringsAsFactors = FALSE)
+  tidy_t <- unnest_tokens(file_text, 'Word', 'tweet', token="words") %>%
              filter(!(Word %in% Word_stop_words) & (nchar(Word) > 2))
-#tidy_text
+  posts_text <- filter(tidy_t, label == flag)
+  posts_counted <- count(posts_text, Word, sort=TRUE)
+  return (posts_counted)
+}
 
-neutral_posts_text <- filter(tidy_text, label == "neutral")
-neutral_posts_counted <- count(neutral_posts_text, Word, sort=TRUE)
-neutral_posts_text
-neutral_posts_counted
+create_bag_of_words <- function(path) {
+  stop_words <- read_file("stop_words.txt")
+  Word_stop_words <- strsplit(stop_words, split='\n')
+  Word_stop_words <- Word_stop_words[[1]]
+  file_text <- read.csv(file = path, stringsAsFactors = FALSE)
+  tidy_t <- unnest_tokens(file_text, 'Word', 'tweet', token="words") %>%
+             filter(!(Word %in% Word_stop_words) & (nchar(Word) > 2))
+  return (tidy_t)
+}
 
-discrimination_posts_text <- filter(tidy_text, label == "discrim")
-discrimination_posts_counted <- count(discrimination_posts_text, Word, sort=TRUE)
-discrimination_posts_text
-discrimination_posts_counted
+create_labeled_dataframe <- function(tidy_t, flag) {
+  posts_text <- filter(tidy_t, label == flag)
+  posts_counted <- count(posts_text, Word, sort=TRUE)
+  return (posts_counted)
+}
+
+
+tidy_t <- create_bag_of_words("data/1-discrimination/train.csv")
+neutral_posts_counted <- create_labeled_dataframe(tidy_t, "neutral")
+discrimination_posts_counted <- create_labeled_dataframe(tidy_t, "discrim")
 
 ```
+
 
 ### Data visualization
 
@@ -207,7 +217,7 @@ naiveBayes <- setRefClass("naiveBayes",
                           
        # here it would be wise to have some vars to store intermediate result
        # frequency dict etc. Though pay attention to bag of wards! 
-       fields = list(data = "data.frame", labels = "vector", labels_quantity = "numeric", unique_words = "numeric"),
+       fields = list(data = "data.frame", labels = "vector", labels_quantity = "numeric", unique_words = "numeric", labels_probabilities = "numeric"),
        methods = list(
                     # prepare your training data as X - bag of words for each of your
                     # messages and corresponding label for the message encoded as 0 or 1 
@@ -230,7 +240,13 @@ naiveBayes <- setRefClass("naiveBayes",
                            
                          }
                          data <<- data[order(data[1], decreasing = TRUE), ]
-                         data[is.na(data)] <<- 0
+                         
+                         for (label in seq(1,length(unlist(labels)))){
+                           current_label <- unlist(labels)[label]
+                           column_name = paste("P(word|",current_label,")")
+                           data[column_name][is.na(data[column_name])] <<- 1/(sum(data[paste("n_", labels[label])], na.rm=TRUE) + unique_words)
+                         }
+                         
                          print(data)
                          
                         
@@ -242,31 +258,60 @@ naiveBayes <- setRefClass("naiveBayes",
                     # return prediction for a single message 
                     predict = function(message)
                     {
-                         removed <- tolower(message) %>% removePunctuation() %>% removeNumbers() %>% stripWhitespace()
-                         words <- strsplit(removed, " +")[[1]]
-                         label_probability_vector = vector(mode="double", length=length(words)*length(labels))
+                         purified <- tolower(message) %>% removePunctuation() %>% removeNumbers() %>% stripWhitespace()
+                         words <- strsplit(purified, " +")[[1]]
+                         words <- setdiff(words, Word_stop_words)
+                         words_probability_vector = vector(mode="numeric", length=length(words)*length(labels))
                          relevant_data = data[data$Word %in% words, ]
-                         print(relevant_data)
                          
                          for (word in words){
                            if (!(word %in% data$Word)){
-                             non_zero_probability = 1/(sum(current_topic$n) + unique_words)
-                             relevant_data[nrow(relevant_data)+1,] <- c(c(word), rep(c(0), times=ncol(data)-1))
-                             print(word)
+                             probability_vector = vector(mode="numeric", length=ncol(data)-1)
+                             for (label in seq(1,length(unlist(labels)))){
+                               non_zero_probability = 1/(sum(data[paste("n_", labels[label])], na.rm=TRUE) + unique_words)
+                               probability_vector[2*label-1] = 0
+                               probability_vector[2*label] = non_zero_probability
+                             
+                             }
+                             relevant_data[nrow(relevant_data)+1,] <- c(c(word), probability_vector)
                            }
                          }
                          print(relevant_data)
-                         print("123")
+                         
+                         
                          for (label in seq(1,length(labels))){
-                            for (word in seq(1,length(words))){
-                              
-                              column_name = paste("P(word|", labels[label], ")")
-                              probability <- data[data$Word==words[word],][column_name]
-                              label_probability_vector[word + (label-1)*length(words)] = probability
-                              
+                          column_name = paste("P(word|", labels[label], ")")
+                          for (word in seq(1,length(words))){
+                            probability <- relevant_data[relevant_data$Word==words[word],][column_name]
+                            words_probability_vector[(label-1)*length(words) + word] = probability
                             }
                          }
-                         print(label_probability_vector[[1]])
+                         multiplication_product_vector = vector("numeric",length(labels)*2)
+                         words_probability_vector <- as.numeric(unlist(words_probability_vector))
+                         for (label in seq(1,length(labels))){
+                           product = 1
+                           multiplication = 0
+                           for (word in seq(1,length(words))){
+                             product = product * words_probability_vector[(label-1)*length(words) + word]
+                             while (product < 1){
+                               multiplication = multiplication + 1
+                               product = product * 10
+                             }
+                           }
+                           multiplication_product_vector[2*label] = product
+                           multiplication_product_vector[2*label-1] = multiplication
+                           
+                         }
+                         multiplication_vector = vector("numeric",length(labels))
+                         product_vector = vector("numeric",length(labels))
+                         
+                         for (label in seq(1,length(labels))){
+                           multiplication_vector[label] = multiplication_product_vector[2*label-1]
+                           product_vector[label] = multiplication_product_vector[2*label]
+                         }
+                         print(multiplication_product_vector)
+                         print(product_vector)
+                         print(multiplication_vector)
                          
                     },
                     
@@ -280,10 +325,10 @@ naiveBayes <- setRefClass("naiveBayes",
                          # TODO
                     }
 ))
-words_list = list(unique(tidy_text$Word))
-model = naiveBayes(labels=unique(tidy_text$label), data=data.frame("Word" = unlist(words_list)), labels_quantity=length(unique(tidy_text$label)))
-model$fit(X=tidy_text)
-model$predict("Trump black wertafyyfay")
+words_list = list(unique(tidy_t$Word))
+model = naiveBayes(labels=unique(tidy_t$label), data=data.frame("Word" = unlist(words_list)), labels_quantity=length(unique(tidy_t$label)))
+model$fit(X=tidy_t)
+model$predict("Trump black wertafyyfay the in a zzzzzzzz")
 ```
 
 ## Measure effectiveness of your classifier
