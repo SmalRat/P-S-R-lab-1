@@ -345,6 +345,7 @@ naiveBayes <- setRefClass("naiveBayes",
                             }
                            }
                          print(max)
+                         print(labels)
                          
                     },
                     
@@ -353,15 +354,51 @@ naiveBayes <- setRefClass("naiveBayes",
                     # look at f1 score or precision and recall
                     # visualize them 
                     # try how well your model generalizes to real world data! 
-                    score = function(X_test, y_test)
+                    score = function(filepath)
                     {
-                         # TODO
+                      
+                      test <-  read.csv(file = filepath, stringsAsFactors = FALSE)
+                      predictions = vector(length=nrow(test))
+                      
+                      
+                      #remove first line in df
+                      count = 1
+                      
+                      for (message in test$tweet) {
+                        print(message)
+                        
+                        predictions[count] = predict(message)
+                        if (predictions[count] == 1) {
+                          
+                          predicitons <- append(predicitons, "discrim")
+                        } else {
+                          predictions <- append(predictions, "neutral")
+                        }
+                        count = count + 1
+                      }
+                      print(predictions)
+                      data1 <- read.csv(filepath, stringsAsFactors = FALSE)
+                      data1 <- data1[, -1]
+                      data1 <- data1[, -1]
+                      names(data1) <- "test set"
+                      data1$prediction <- predictions
+                      counter = 0
+                      for (row in 1:nrow(data1)) {
+                        verified <- data1[row, "test set"]
+                        predict  <- data1[row, prediction]
+                        if (verified == predict) {
+                          counter = counter + 1
+                        }
+                      }
                     }
-))
+       ))
+                    
+
 words_list = list(unique(tidy_t$Word))
 model = naiveBayes(labels=unique(tidy_t$label), data=data.frame("Word" = unlist(words_list)), labels_quantity=length(unique(tidy_t$label)))
 model$fit(X=tidy_t)
 model$predict("Trump black wertafyyfay the in a zzzzzzzz")
+model$score(test_path)
 ```
 
 ## Measure effectiveness of your classifier
