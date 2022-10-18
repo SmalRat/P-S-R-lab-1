@@ -321,6 +321,30 @@ naiveBayes <- setRefClass("naiveBayes",
                          
                          print(product_vector)
                          print(multiplication_vector)
+                         current_max = multiplication_vector[1];
+                         idxs <- c()
+                         range <- 5:length(multiplication_vector)
+                         for (i in range) {
+                           if (!(is.na(multiplication_vector[i])) && (multiplication_vector[i] > current_max)) {
+                             current_max = multiplication_vector[i]
+                           }
+                         }
+                         for (i in range) {
+                           if (!(is.na(multiplication_vector[i])) && (multiplication_vector[i] == current_max)) {
+                             idxs <- append(idxs, i)
+                           } 
+                         }
+                         #print(idxs)
+                         max = idxs[1]
+                         if (length(idxs) > 1){
+                           max = -1
+                           for (idx in idxs) {
+                             if (product_vector[idx] > max) {
+                               max = idx
+                             }
+                            }
+                           }
+                         print(max)
                          
                     },
                     
