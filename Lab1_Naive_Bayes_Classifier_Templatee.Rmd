@@ -365,10 +365,7 @@ naiveBayes <- setRefClass("naiveBayes",
                       count = 1
                       
                       for (message in test$tweet) {
-                        # print(message)
-                        print(message)
                         prediction <- model$predict(message)
-                        print(prediction)
                         # predictions[count] = predict(message)
                         if (prediction == 1) {
                           
@@ -378,14 +375,13 @@ naiveBayes <- setRefClass("naiveBayes",
                         }
                         count = count + 1
                       }
-                      print
                       # print(predictions)
                       #print(test)
                       
                       # data1 <- data1[, -1]
-                      print(predictions)
+                      #print(predictions)
                       true_labels = test[ ,"label"]
-                      print(true_labels)
+                      #print(true_labels)
 
                       counter = 0
                       for (i in 1:length(true_labels)) {
@@ -395,6 +391,11 @@ naiveBayes <- setRefClass("naiveBayes",
                         }
                       }
                       print(counter)
+                      print(length(true_labels))
+                      total <- length(true_labels)
+                      slices <- c((total-counter), counter)
+                      lbls <- c("wrong predictions", "correct predictions")
+                      pie(slices, labels = lbls, main="statistics of corectness")
                     }
        ))
                     
