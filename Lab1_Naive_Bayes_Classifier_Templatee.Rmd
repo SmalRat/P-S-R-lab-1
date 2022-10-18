@@ -207,7 +207,7 @@ naiveBayes <- setRefClass("naiveBayes",
                           
        # here it would be wise to have some vars to store intermediate result
        # frequency dict etc. Though pay attention to bag of wards! 
-       fields = list(data = "data.frame", labels = "vector"),
+       fields = list(data = "data.frame", labels = "vector", labels_quantity = "numeric"),
        methods = list(
                     # prepare your training data as X - bag of words for each of your
                     # messages and corresponding label for the message encoded as 0 or 1 
@@ -223,6 +223,8 @@ naiveBayes <- setRefClass("naiveBayes",
                            column_name = paste("P(word|",current_label,")")
                            
                            current_topic = filter(X, label == current_label) %>% count(Word, sort=TRUE)
+                           
+                           labels_quantity  
                            
                            current_topic[column_name] = ((current_topic["n"]+1)/(sum(current_topic$n) + length(unique(current_topic$Word))))
                           
@@ -242,21 +244,22 @@ naiveBayes <- setRefClass("naiveBayes",
                     # return prediction for a single message 
                     predict = function(message)
                     {
-                         prob_neutral = 1
-                         prob_discrim = 1
                          removed <- tolower(message) %>% removePunctuation() %>% removeNumbers() %>% stripWhitespace()
-                         removed
-                         words <- strsplit(removed, " +")
-                         words <- words[[1]]
-                         print(words)
-                         print(labels)
-                         
+                         words <- strsplit(removed, " +")[[1]]
                          label_probability_vector = vector(mode="double", length=length(words)*length(labels))
+                         relevant_data = data[data$Word %in% words, ]
+                         print(relevant_data)
+                         for (word in words){
+                           if (!(word %in% data$Word)){
+                             relevant_data[nrow(relevant_data)+1,] <- c(word, 0, 123, 0, 123)
+                             print(word)
+                           }
+                         }
+                         print(relevant_data)
+                         print("123")
                          for (label in seq(1,length(labels))){
-                            
                             for (word in seq(1,length(words))){
-                              print(labels[label])
-                              print(words[word])
+                              
                               column_name = paste("P(word|", labels[label], ")")
                               probability <- data[data$Word==words[word],][column_name]
                               label_probability_vector[word + (label-1)*length(words)] = probability
@@ -278,9 +281,9 @@ naiveBayes <- setRefClass("naiveBayes",
                     }
 ))
 words_list = list(unique(tidy_text$Word))
-model = naiveBayes(labels=unique(tidy_text$label), data=data.frame("Word" = unlist(words_list)))
+model = naiveBayes(labels=unique(tidy_text$label), data=data.frame("Word" = unlist(words_list)), labels_quantity=length(unique(tidy_text$label)))
 model$fit(X=tidy_text)
-model$predict("Trump black")
+model$predict("Trump black wertafyyfay")
 ```
 
 ## Measure effectiveness of your classifier
