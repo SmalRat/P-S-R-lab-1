@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Lab Assignment 1: Naive Bayes Classifier
 
-### *Name1 Surname1, Name2 Surname2, Name3 Surname3*
+### *Lera Fedorchak, Oleksandra Maslenchenko, Oleksandr Shchur*
 
 ## Introduction
 
@@ -142,7 +142,7 @@ Word_stop_words <- strsplit(stop_words, split='\n')[[1]]
 
 train <-  read.csv(file = train_path, stringsAsFactors = FALSE)
 test <-  read.csv(file = test_path, stringsAsFactors = FALSE)
-print(train)
+
 
 create_new_bag_of_words_with_label <- function(path, flag){
   stop_words <- read_file("stop_words.txt")
@@ -232,7 +232,7 @@ naiveBayes <- setRefClass("naiveBayes",
                          for (label in seq(1,length(unlist(labels)))){
                            labels_probabilities[label] <<- (count_frame[count_frame$label == labels[label], "n"])/n_total
                          }
-                         print(labels_probabilities)
+                         #print(labels_probabilities)
                          for (i in seq(1,length(unlist(labels)))){
                            current_label <- unlist(labels)[i]
                            
@@ -255,7 +255,7 @@ naiveBayes <- setRefClass("naiveBayes",
                            data[column_name][is.na(data[column_name])] <<- 1/(sum(data[paste("n_", labels[label])], na.rm=TRUE) + unique_words)
                          }
                          
-                         print(data)
+                         #print(data)
                          
                         
                          
@@ -358,7 +358,7 @@ naiveBayes <- setRefClass("naiveBayes",
                     score = function(filepath)
                     {
                       
-                      test <-  head(read.csv(file = filepath, stringsAsFactors = FALSE), 20)
+                      test <-  head(read.csv(file = filepath, stringsAsFactors = FALSE), 100)
                       predictions = vector(length=nrow(test))
                       
                       
@@ -390,8 +390,8 @@ naiveBayes <- setRefClass("naiveBayes",
                           counter = counter + 1
                         }
                       }
-                      print(counter)
-                      print(length(true_labels))
+                      #print(counter)
+                      #print(length(true_labels))
                       total <- length(true_labels)
                       slices <- c((total-counter), counter)
                       lbls <- c("wrong predictions", "correct predictions")
