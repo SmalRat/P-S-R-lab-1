@@ -142,6 +142,7 @@ Word_stop_words <- strsplit(stop_words, split='\n')[[1]]
 
 train <-  read.csv(file = train_path, stringsAsFactors = FALSE)
 test <-  read.csv(file = test_path, stringsAsFactors = FALSE)
+print(train)
 
 create_new_bag_of_words_with_label <- function(path, flag){
   stop_words <- read_file("stop_words.txt")
@@ -224,7 +225,14 @@ naiveBayes <- setRefClass("naiveBayes",
                     # (binary classification task)
                     fit = function(X, y)
                     {
+                         labels_probabilities <<- vector("numeric", length(unlist(labels)))
                          unique_words <<- length(unique(X$Word))
+                         count_frame = count(train, label, sort=TRUE)
+                         n_total = sum(count_frame$n)
+                         for (label in seq(1,length(unlist(labels)))){
+                           labels_probabilities[label] <<- (count_frame[count_frame$label == labels[label], "n"])/n_total
+                         }
+                         print(labels_probabilities)
                          for (i in seq(1,length(unlist(labels)))){
                            current_label <- unlist(labels)[i]
                            
@@ -298,6 +306,7 @@ naiveBayes <- setRefClass("naiveBayes",
                                product = product * 10
                              }
                            }
+                           product = product * labels_probabilities[label]
                            multiplication_product_vector[2*label] = product
                            multiplication_product_vector[2*label-1] = multiplication
                            
@@ -309,7 +318,7 @@ naiveBayes <- setRefClass("naiveBayes",
                            multiplication_vector[label] = multiplication_product_vector[2*label-1]
                            product_vector[label] = multiplication_product_vector[2*label]
                          }
-                         print(multiplication_product_vector)
+                         
                          print(product_vector)
                          print(multiplication_vector)
                          
