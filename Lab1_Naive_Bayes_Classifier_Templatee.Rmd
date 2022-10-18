@@ -251,24 +251,19 @@ naiveBayes <- setRefClass("naiveBayes",
                          print(words)
                          print(labels)
                          
-                         labels_probabilities = list()
+                         label_probability_vector = vector(mode="double", length=length(words)*length(labels))
                          for (label in seq(1,length(labels))){
-                            label_probability_vector = vector(mode="double", length=length(words))
+                            
                             for (word in seq(1,length(words))){
                               print(labels[label])
                               print(words[word])
-                             # row <- which(rownames(discrimination_posts_counted) == i)
-                             # val <- discrimination_posts_counted[row, 3]
                               column_name = paste("P(word|", labels[label], ")")
-                              probability <- data[data$Word==words[word],][column_name] #[match(i, discrimination_posts_counted$discrimination_posts_counted[,1])]
-                              label_probability_vector[word] = probability
+                              probability <- data[data$Word==words[word],][column_name]
+                              label_probability_vector[word + (label-1)*length(words)] = probability
                               
                             }
-                            
-                            labels_probabilities <- append(labels_probabilities, label_probability_vector)
-                            
                          }
-                         print(labels_probabilities)
+                         print(label_probability_vector[[1]])
                          
                     },
                     
