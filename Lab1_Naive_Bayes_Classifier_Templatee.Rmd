@@ -372,25 +372,29 @@ naiveBayes <- setRefClass("naiveBayes",
                         # predictions[count] = predict(message)
                         if (prediction == 1) {
                           
-                          predictions <- append(prediciton, "discrim")
+                          predictions[count] <- "discrim"
                         } else {
-                          predictions <- append(prediction, "neutral")
+                          predictions[count] <-"neutral" 
                         }
-                        # count = count + 1
+                        count = count + 1
                       }
+                      print
                       # print(predictions)
-                      data1 <- test$labels
+                      #print(test)
+                      
                       # data1 <- data1[, -1]
-                      print(data1)
-                      data1$prediction <- predictions
+                      print(predictions)
+                      true_labels = test[ ,"label"]
+                      print(true_labels)
+
                       counter = 0
-                      for (row in 1:nrow(data1)) {
-                        verified <- data1[row, "test set"]
-                        predict  <- data1[row, prediction]
-                        if (verified == predict) {
+                      for (i in 1:length(true_labels)) {
+                      
+                        if (predictions[i] == true_labels[i]) {
                           counter = counter + 1
                         }
                       }
+                      print(counter)
                     }
        ))
                     
